@@ -13,12 +13,14 @@ from decorators import (
     exception_handler,
     requires_token,
     required_args,
+    required_permissions,
     ArgumentError,
     MissingFileError,
     BudgetLookupError,
 )
 from db import BudgetDb
 from core import logger
+from user_token import UserToken
 
 budgets_api = Blueprint("budgets_api", __name__, url_prefix="/budgets")
 
@@ -28,9 +30,9 @@ budgets_db = BudgetDb(os.environ.get("BUDGETS_DB_URI"), logger)
 @budgets_api.route("/", methods=["POST"])
 @exception_handler
 @requires_token
-def add_users_budgets(token):
+def add_users_budgets(token: UserToken):
 
-    user_id = token["userid"]
+    user_id = token._user_id
 
     # get display name from form
     raw_displayname = request.form.get("displayname", None, str)
@@ -43,11 +45,6 @@ def add_users_budgets(token):
     budgetid = budgets_db.generate_budgetid()
     budgetnotes = bleach.clean(raw_budgetnotes)
     displayname = bleach.clean(raw_displayname)
-
-    # auth_payload = get_token_data(request.headers.get(app.config['TOKEN_NAME']).encode('utf8'))
-
-    # if user_id != auth_payload["userid"]:
-    #    raise PermissionError
 
     budget_data = {
         "budgetid": budgetid,
@@ -70,9 +67,9 @@ def add_users_budgets(token):
 @budgets_api.route("/", methods=["GET"])
 @exception_handler
 @requires_token
-def get_users_budgets(token):
+def get_users_budgets(token: UserToken):
     try:
-        user_id = token["userid"]
+        user_id = token._user_id
         # Get all budgets that belong to this user
         logger.debug("fetching budgets of %s", user_id)
         budgets = budgets_db.get_budgets(user_id)
@@ -90,9 +87,9 @@ def get_users_budgets(token):
 # Needs work
 @budgets_api.route("/upload", methods=["POST"])
 @exception_handler
-def upload_budget(token):
+def upload_budget(token: UserToken):
 
-    user_id = token["userid"]
+    user_id = token._user_id
 
     file = request.files["file"]
     if file.filename == "":
@@ -104,9 +101,10 @@ def upload_budget(token):
 @budgets_api.route("/<budget_id>", methods=["GET"])
 @exception_handler
 @requires_token
-def get_users_budget(token, budget_id: str):
+def get_users_budget(token: UserToken, budget_id: str):
+
     try:
-        user_id = token["userid"]
+        user_id = token._user_id
         # Get all budget with the specified id
         logger.debug("fetching budget with id of %s", budget_id)
         budget = budgets_db.get_budget(budget_id)
@@ -121,7 +119,11 @@ def get_users_budget(token, budget_id: str):
         )
         categories = requests.get(url=category_URL, headers=request.headers)
 
-        budget["categories"] = categories.json()["values"]
+        categories_json = categories.json()
+
+        logger.debug(categories_json)
+
+        budget["categories"] = categories_json["values"]
 
         return jsonify(budget), 201
 
@@ -133,10 +135,10 @@ def get_users_budget(token, budget_id: str):
 @budgets_api.route("/<budget_id>", methods=["PATCH"])
 @exception_handler
 @requires_token
-def update_users_budget(token, budget_id: str):
+def update_users_budget(token: UserToken, budget_id: str):
 
     try:
-        user_id = token["userid"]
+        user_id = token._user_id
         req = {k: bleach.clean(v) for k, v in request.form.items()}
         req["budgetid"] = budget_id
         req["accessdate"] = datetime.utcnow()
@@ -164,7 +166,7 @@ def update_users_budget(token, budget_id: str):
 @budgets_api.route("/<budget_id>", methods=["DELETE"])
 @exception_handler
 @requires_token
-def remove_users_budget(token, budget_id: str) -> Tuple[Response, int]:
+def remove_users_budget(token: UserToken, budget_id: str) -> Tuple[Response, int]:
     """Removes the specified budget for the specified user
 
     Args:
@@ -175,7 +177,7 @@ def remove_users_budget(token, budget_id: str) -> Tuple[Response, int]:
         Tuple[Response, int]: _description_
     """
 
-    user_id = token["userid"]
+    user_id = token._user_id
 
     if budgets_db.get_budget(budget_id) is None:
         raise BudgetLookupError("budget with id {0} not found".format(budget_id), 404)

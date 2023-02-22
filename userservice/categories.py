@@ -6,18 +6,28 @@ import os
 import bleach
 from flask import Blueprint, request, jsonify
 
+from user_token import UserToken
+
 categories_api = Blueprint('categories_api', __name__)
 
 categories_db = CategoryDb(os.environ.get("CATEGORIES_DB_URI"), logger)
 
+@categories_api.route('/categories', methods=["GET"])
+@exception_handler
+@requires_token
+def list_user_categories(token: UserToken):
 
-@categories_api.route('/<user_id>/budgets/<budget_id>/categories', methods=["POST"])
+    logger.debug("fetching categories")
+    categories = categories_db.list_categories_by_user_id(token._user_id)
+    logger.debug("successfully got categories")
+
+    return jsonify({"values": categories}), 201
+
+@categories_api.route('/budgets/<budget_id>/categories', methods=["POST"])
 @exception_handler
 @requires_token
 @required_args('displayname')
-def add_budget_category(user_id: str, budget_id: str, **kwargs):
-    
-    print(request.get_json())
+def add_budget_category(budget_id: str, token: UserToken, **kwargs):
 
     raw_parentid = request.args.get('parentid', None, str)
 
@@ -36,6 +46,7 @@ def add_budget_category(user_id: str, budget_id: str, **kwargs):
         "displayname": displayname,
         "parentid": parentid,
         "budgetid": budget_id,
+        "userid": token._user_id
     }
 
     # Add user_data to database
@@ -47,14 +58,13 @@ def add_budget_category(user_id: str, budget_id: str, **kwargs):
 
     return jsonify(budget), 201
 
-
-@categories_api.route('/<user_id>/budgets/<budget_id>/categories', methods=["GET"])
+@categories_api.route('/budgets/<budget_id>/categories', methods=["GET"])
 @exception_handler
 @requires_token
-def get_budget_categories(user_id, budget_id):
+def get_budget_categories(token: UserToken, budget_id: str, **kwargs):
 
     logger.debug("fetching budget categories")
-    categories = categories_db.get_categories(budget_id)
+    categories = categories_db.list_categories_by_budget_id(budget_id)
     logger.debug("successfully got categories")
 
     return jsonify({"values": categories}), 201

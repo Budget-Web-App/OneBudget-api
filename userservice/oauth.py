@@ -3,8 +3,9 @@ import bleach
 import bcrypt
 import os
 
-# interal imports
-from shared import generate_new_token
+from sqlalchemy.exc import SQLAlchemyError
+
+from shared import generate_new_token, validate_new_user
 from decorators import (
     exception_handler,
     requires_token,
@@ -63,3 +64,51 @@ def get_token():
     }
 
     return jsonify(payload), 200
+
+@oauth_api.route("/signup", methods=["POST"])
+@exception_handler
+def signup():
+    try:
+        logger.debug('Sanitizing input.')
+        req = {k: bleach.clean(v) for k, v in request.form.items()}
+        validate_new_user(req)
+
+        if users_db.get_user(req["email"]) is not None:
+            raise LookupError(
+                "email {0} is already in use".format(req["email"]))
+
+        accountid = users_db.generate_userid()
+
+        logger.debug('generating password hash')
+        password = req["password"]
+        salt = bcrypt.gensalt()
+        passhash = bcrypt.hashpw(password.encode('utf-8'), salt)
+        logger.info('Successfully generated password hash')
+
+        user_data = {
+            "userid": accountid,
+            "email": req["email"],
+            "timezone": req["timezone"],
+            "passhash": passhash
+        }
+
+        # Add user_data to database
+        logger.debug("Adding user to the database")
+        users_db.add_user(user_data)
+        logger.info("Successfully created user.")
+
+        user = users_db.get_user(user_data["email"])
+        del user["passhash"]
+
+        return jsonify(user), 201
+    except UserWarning as warn:
+        logger.error("Error creating new user: %s", str(warn))
+        return str(warn), 400
+    except NameError as err:
+        logger.error("Error creating new user: %s", str(err))
+        return str(err), 409
+    except SQLAlchemyError as err:
+        logger.error("Error creating new user: %s", str(err))
+        return 'failed to create user', 500
+    except Exception as e:
+        return str(e), 404

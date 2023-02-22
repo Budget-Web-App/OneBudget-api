@@ -1,4 +1,7 @@
 import logging
+
+from typing import Optional, List
+
 from sqlalchemy import create_engine, MetaData, Table, Column, String, Date, LargeBinary, and_
 import random
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
@@ -194,6 +197,7 @@ class CategoryDb:
             MetaData(self.engine),
             Column('categoryid', String, primary_key=True),
             Column('displayname', String, nullable=False),
+            Column('userid', String, nullable=False),
             Column('parentid', String, nullable=True),
             Column('budgetid', String, nullable=False),
         )
@@ -252,12 +256,24 @@ class CategoryDb:
         self.logger.debug('RESULT: fetched budget data for %s', categoryid)
         return dict(result) if result is not None else None
     
-    def get_categories(self, budgetid):
-        statement = self.categories_table.select().where(and_(self.categories_table.c.budgetid == budgetid,self.categories_table.c.parentid == None))
+    def list_categories_by_budget_id(self, budget_id: str, parent_id: Optional[str] = None) -> Optional[List]:
+
+        if parent_id == "":
+            parent_id = None
+
+        statement = self.categories_table.select().where(and_(self.categories_table.c.budgetid == budget_id,self.categories_table.c.parentid == parent_id))
         self.logger.debug('QUERY: %s', str(statement))
         with self.engine.connect() as conn:
             results = conn.execute(statement)
-        self.logger.debug('RESULT: fetched categories for budgetid %s', budgetid)
+        self.logger.debug('RESULT: fetched categories for budgetid %s', budget_id)
+        return [dict(result) for result in results] if results is not None else None
+
+    def list_categories_by_user_id(self, user_id: str) -> Optional[List]:
+        statement = self.categories_table.select().where(and_(self.categories_table.c.userid == user_id))
+        self.logger.debug('QUERY: %s', str(statement))
+        with self.engine.connect() as conn:
+            results = conn.execute(statement)
+        self.logger.debug('RESULT: fetched categories for budgetid %s', user_id)
         return [dict(result) for result in results] if results is not None else None
 
     def delete_category(self, categoryid):

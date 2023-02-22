@@ -1,4 +1,9 @@
+from typing import List, Callable
+
+from functools import wraps
+
 from shared import verify_token, get_token_data
+
 from core import logger
 
 from flask import request, jsonify
@@ -60,15 +65,16 @@ def exception_handler(func):
     wrapper.__name__ = func.__name__
     return wrapper
 
-def requires_token(func):
+def requires_token(func: Callable):
     """Used to check if the path has a token
 
     Args:
         func (function): _description_
     """
+    @wraps(func)
     def _requires_header_token(*args, **kwargs):
         try:
-            #app.config['TOKEN_NAME']
+            #TODO change from 'token' to Authorization to handle bearer token
             raw_token = request.headers.get("token")
 
             if raw_token is None:
@@ -124,3 +130,17 @@ def required_args(require_args: list):
     # Renaming the function name:
     required_args.__name__ = required_args_decorator.__name__
     return required_args_decorator
+
+def required_permissions(permissions: List[str]):
+
+    def outer(func: Callable):
+
+        @requires_token
+        @wraps(func)
+        def inner(*args, **kwargs):
+
+            print(kwargs)
+
+            return func(*args, **kwargs)
+        return inner
+    return outer

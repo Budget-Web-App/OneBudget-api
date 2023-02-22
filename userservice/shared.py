@@ -3,8 +3,12 @@ from typing import Tuple
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
+
 import jwt
+
 from datetime import datetime, timedelta
+
+from user_token import UserToken
 
 def verify_token(token):
     """
@@ -22,12 +26,12 @@ def verify_token(token):
         current_app.logger.error('Error validating token: %s', str(err))
         return False
 
-def get_token_data(token):
+def get_token_data(token) -> UserToken:
     current_app.logger.debug('Getting token data.')
     if token is None:
         return None
     try:
-        token = jwt.decode(token, key=get_private_key(),
+        token = UserToken.decode(token, key=get_private_key(),
                                algorithms='RS256', verify=False)
         return token
     except jwt.exceptions.InvalidTokenError as err:
@@ -55,14 +59,10 @@ def validate_new_user(req):
         raise UserWarning('missing value for input field(s)')
 
 def generate_new_token(user: dict) -> Tuple[bytes, timedelta]:
+
     exp_sec = timedelta(seconds=current_app.config['EXPIRY_SECONDS'])
-    exp_time = datetime.utcnow() + exp_sec
-    payload = {
-            'email': user["email"],
-            'userid': user['userid'],
-            'iat': datetime.utcnow(),
-            'exp': exp_time,
-    }
+    
+    token = UserToken.create_user_token(user, exp_sec)
 
     # Generate token
-    return jwt.encode(payload, get_private_key(), algorithm='RS256'), exp_sec
+    return token.encode(get_private_key(), 'RS256'), exp_sec
