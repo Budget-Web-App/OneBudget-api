@@ -21,6 +21,7 @@ class UserDb:
             Column('timezone', String, nullable=False),
             Column('registereddate', Date, nullable=True),
         )
+
         # Set up tracing autoinstrumentation for sqlalchemy
         SQLAlchemyInstrumentor().instrument(
             engine=self.engine,
