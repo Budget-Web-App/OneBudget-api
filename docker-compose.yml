@@ -21,7 +21,7 @@ services:
       PRIV_KEY_PATH: "/root/.ssh/privatekey"
       PUB_KEY_PATH: "/root/.ssh/publickey"
       SECRET: "test123"
-      ACCOUNTS_DB_URI: "postgresql://accountsadmin:accountspwd@accounts-db:5432/accountsdb"
+      USERS_DB_URI: "postgresql://accountsadmin:accountspwd@accounts-db:5432/accountsdb"
       BUDGETS_DB_URI: "postgresql://accountsadmin:accountspwd@accounts-db:5432/accountsdb"
       CATEGORIES_DB_URI: "postgresql://accountsadmin:accountspwd@accounts-db:5432/accountsdb"
     # Valid levels are debug, info, warning, error, critical. If no valid level is set, gunicorn will default to info.

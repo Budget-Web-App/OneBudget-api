@@ -1,43 +1,35 @@
-# Copyright 2021 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+FROM ubuntu:latest
 
-# The Google App Engine python runtime is Debian Jessie with Python installed
-# and various os-level packages to allow installation of popular Python
-# libraries. The source is on github at:
-#   https://github.com/GoogleCloudPlatform/python-docker
-FROM gcr.io/google-appengine/python
+# Avoid warnings by switching to noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
+# update/upgrade APIT
+RUN apt update && apt upgrade -y
+# install dependencies
+RUN apt install -y software-properties-common \
+    build-essential \
+    curl \
+    libpq5 \
+    libpq-dev
+# add repository for python 3.11
+RUN add-apt-repository ppa:deadsnakes/ppa
+# update APT library
+RUN apt update
+# install python 3.11
+RUN apt install -y python3.11 \
+    python3.11-distutils \
+    python3.11-venv\
+    python3.11-dev \
+    gunicorn3
+# install pip
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
 
-# show python logs as they occur
-ENV PYTHONUNBUFFERED=0
-
-#RUN apt-get -y install openssh-client
-
-# Create a virtualenv for the application dependencies.
-RUN virtualenv -p python3.7 /env
-
-# Set virtualenv environment variables. This is equivalent to running
-# source /env/bin/activate. This ensures the application is executed within
-# the context of the virtualenv and will have access to its dependencies.
-ENV VIRTUAL_ENV /env
-ENV PATH /env/bin:$PATH
-
-# explicitly set a fallback log level in case no log level is defined by Kubernetes
-ENV LOG_LEVEL info
+RUN python3.11 -m venv venv
+# Enable venv
+ENV PATH="./venv/bin:$PATH"
 
 # Install dependencies.
 ADD requirements.txt /app/requirements.txt
-RUN pip install -r /app/requirements.txt
+RUN pip install -U pip wheel -r /app/requirements.txt
 
 # Add application code.
 COPY . /app/
@@ -54,4 +46,4 @@ COPY jwtRS256.key /root/.ssh/privatekey
 COPY jwtRS256.key.pub /root/.ssh/publickey
 
 # Start server using gunicorn
-CMD gunicorn -b :$PORT --threads 2 --log-config /logging.conf --log-level=$LOG_LEVEL "service:create_app()"
+CMD gunicorn -b :$PORT --threads 2 --log-config /logging.conf --log-level=$LOG_LEVEL "app.service:create_app()"

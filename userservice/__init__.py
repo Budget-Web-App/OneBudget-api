@@ -1,13 +1,14 @@
-from budgets import budgets_api
-from categories import categories_api
-from oauth import oauth_api
-
-from flask import Flask
-from sqlalchemy.exc import OperationalError
-from db import UserDb, CategoryDb, MonthDb
 import logging
 import sys
 import os
+
+from flask import Flask
+from sqlalchemy.exc import OperationalError
+
+from .endpoints.budgets import budgets_api
+from .endpoints.categories import categories_api
+from .db import UserDb, CategoryDb, MonthDb
+from .oauth import oauth_api
 
 
 app = Flask(__name__)

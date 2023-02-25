@@ -1,10 +1,10 @@
-from db import CategoryDb
-from decorators import exception_handler, requires_token, required_args, CategoryLookupError
-from core import logger
-
 import os
 import bleach
 from flask import Blueprint, request, jsonify
+
+from ..db import CategoryDb
+from ..decorators import exception_handler, requires_token, required_args, CategoryLookupError
+from ..core import logger
 
 categories_api = Blueprint('categories_api', __name__)
 
@@ -16,8 +16,6 @@ categories_db = CategoryDb(os.environ.get("CATEGORIES_DB_URI"), logger)
 @requires_token
 @required_args('displayname')
 def add_budget_category(user_id: str, budget_id: str, **kwargs):
-    
-    print(request.get_json())
 
     raw_parentid = request.args.get('parentid', None, str)
 

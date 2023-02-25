@@ -1,5 +1,5 @@
-from shared import verify_token, get_token_data
-from core import logger
+from .shared import verify_token, get_token_data
+from .core import logger
 
 from flask import request, jsonify
 
