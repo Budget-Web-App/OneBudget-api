@@ -8,7 +8,7 @@ services:
 
   userservice:
     platform: linux/amd64
-    build: ./userservice
+    build: ./api
     ports:
     - "5000:5000"
     links:
