@@ -1,7 +1,7 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import APIRouter, Depends, HTTPException, Request, Security
+from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 
 from datetime import datetime
 
@@ -18,10 +18,23 @@ from .flags import budget_flags_router
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+async def get_budget_scopes(request: Request, security_scopes: SecurityScopes = SecurityScopes()):
+    
+    token = request.headers["authorization"].replace("Bearer ", "")
+    
+    token_data = Token.parse_token(token)
+    
+    budget_id = request.path_params.get("budget_id")
+    
+    security_scopes.scopes.append(f"{budget_id}.read")
+    
+    print(security_scopes.scopes)
+    
+
 budgets_router = APIRouter(
     prefix="/budgets",
     tags=["budgets"],
-    dependencies=[Depends(oauth2_scheme)],
+    dependencies=[Depends(oauth2_scheme), Security(get_budget_scopes)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -34,7 +47,7 @@ async def list_budgets(token: str = Depends(oauth2_scheme), db: Session = Depend
     token_data = Token.parse_token(token)
     
     budgets = BudgetDb.list_budgets(db, token_data.user_id)
-    
+        
     return budgets
 
 @budgets_router.post("/")

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, Any, List
 
 from datetime import datetime, timedelta
 
@@ -22,6 +22,9 @@ class Registration(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+    expires_in: int = 0
+    scope: List[str] = []
+    refresh_token: str
     
 class Token(BaseModel):
     email: str
@@ -43,11 +46,12 @@ class Token(BaseModel):
         token = token.replace("Bearer ", "")
 
         try:
-            decoded_token = decode(token, key=get_private_key(), algorithms=[
-                                'RS256'], options={"verify_signature": False})
-            return Token(**decoded_token)
+            decoded_token = decode(token, key=get_private_key(), algorithms=['RS256'], options={"verify_signature": False})
+            return cls(
+                **decoded_token
+            )
         except exceptions.InvalidTokenError as err:
-            raise HTTPException(status_code=500, detail="Unexpected error parsing token")
+            raise HTTPException(status_code=409, detail="Unexpected error parsing token")
     
     @classmethod
     def create_token(cls, email: str, user_id: str) -> str:
@@ -58,12 +62,12 @@ class Token(BaseModel):
         payload = Token(
             email=email,
             user_id=user_id,
-            iat=datetime.utcnow(),
-            exp=exp_time,
+            iat=int(datetime.utcnow().timestamp()),
+            exp=int(exp_time.timestamp()),
         )
         
         # Generate token
-        return encode(payload, get_private_key(), algorithm='RS256')
+        return encode(payload.__dict__, get_private_key(), algorithm='RS256')
     
     def encode(self) -> str:
         # Generate token

@@ -31,6 +31,11 @@ class UserDb(Base):
         Returns:
             UserDb: The newly created user
         """
+        
+        existing_user = UserDb.get_user(db, user.email)
+        
+        if existing_user is not None:
+            raise Exception(f"User with email {user.email} already exists")
 
         db_user = UserDb(
             id=UserDb.generate_userid(db),
