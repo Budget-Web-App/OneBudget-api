@@ -1,7 +1,7 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import APIRouter, Depends, HTTPException, Request, Security
+from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 
 from datetime import datetime
 
@@ -18,10 +18,23 @@ from .flags import budget_flags_router
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+async def get_budget_scopes(request: Request, security_scopes: SecurityScopes = SecurityScopes()):
+    
+    #token = request.headers["authorization"].replace("Bearer ", "")
+    
+    #token_data = Token.parse_token(token)
+    
+    budget_id = request.path_params.get("budget_id")
+    
+    security_scopes.scopes.append(f"{budget_id}.read")
+    
+    print(security_scopes.scopes)
+    
+
 budgets_router = APIRouter(
     prefix="/budgets",
     tags=["budgets"],
-    dependencies=[Depends(oauth2_scheme)],
+    #dependencies=[Security(get_budget_scopes)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -31,10 +44,11 @@ budgets_router.include_router(budget_flags_router)
 
 @budgets_router.get("/")
 async def list_budgets(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> List[Budget]:
+    
     token_data = Token.parse_token(token)
     
     budgets = BudgetDb.list_budgets(db, token_data.user_id)
-    
+        
     return budgets
 
 @budgets_router.post("/")
@@ -49,9 +63,11 @@ async def create_budget(budget: BaseBudget, token: str = Depends(oauth2_scheme),
     return budget
 
 @budgets_router.get("/{budget_id}")
-async def get_budget(request: Request, budget_id: str, db: Session = Depends(get_db)) -> Optional[Budget]:
+async def get_budget(request: Request, budget_id: str, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> Optional[Budget]:
     
-    token_data = Token.parse_token(request.headers["authorization"])
+    Authorize.jwt_required()
+    
+    token_data = Token.parse_token(token)
     
     budget = BudgetDb.get_budget(db, budget_id)
     
