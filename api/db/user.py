@@ -14,7 +14,7 @@ class UserDb(Base):
 
     __tablename__ = "users"
 
-    id = Column('user_id', String, primary_key=True)
+    id = Column('userid', String, primary_key=True)
     email = Column('email', String, unique=True, nullable=False)
     pass_hash = Column('passhash', LargeBinary, nullable=False)
     timezone = Column('timezone', String, nullable=True)

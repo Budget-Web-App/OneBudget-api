@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from fastapi_jwt_auth import AuthJWT
+
 
 from bleach import clean
 import bcrypt

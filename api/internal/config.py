@@ -1,21 +1,42 @@
-from os import environ
+from os import environ, getcwd
+from os.path import join
+
 from functools import lru_cache
 from dotenv import load_dotenv
 
-from fastapi_jwt_auth import AuthJWT
-
 from pydantic import BaseSettings
 
-load_dotenv("C:\\Users\\micha_063o0o\\Projects\\OneBudget-api\\api\\internal\\.env")
+# To make runnable without docker
+if environ.get("DOCKERCONTAINER", False):
+    # To make compatible with any OS
+    env_path = join(getcwd(), ".env")
+
+    load_dotenv(env_path)
+
 
 class Settings(BaseSettings):
+    authjwt_algorithm: str
     authjwt_private_key: str
     authjwt_public_key: str
-    authjwt_secret_key: str
 
 
-#@lru_cache()
-@AuthJWT.load_config
+DATABASE_PATH = environ.get('DB_URI')
+
+
+@lru_cache
 def get_settings():
-    
-    return Settings(authjwt_private_key=open(environ.get("PRIV_KEY_PATH"), 'r').read(),authjwt_public_key=open(environ.get("PUB_KEY_PATH"), 'r').read(), authjwt_secret_key=environ.get('SECRET'))
+
+    PRIV_KEY_PATH = environ.get("PRIV_KEY_PATH")
+    PUB_KEY_PATH = environ.get("PUB_KEY_PATH")
+
+    if PRIV_KEY_PATH is None:
+        raise Exception("Missing PRIV_KEY_PATH")
+
+    if PUB_KEY_PATH is None:
+        raise Exception("Missing PUB_KEY_PATH")
+
+    return Settings(
+        authjwt_algorithm="RS512",
+        authjwt_private_key=open(PRIV_KEY_PATH, 'r').read(),
+        authjwt_public_key=open(PUB_KEY_PATH, 'r').read(),
+    )

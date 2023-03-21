@@ -4,8 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
-from fastapi_jwt_auth import AuthJWT
-
 import pyotp
 
 from base64 import b32encode
@@ -15,7 +13,7 @@ import bcrypt
 
 from sqlalchemy.orm import Session
 
-from ....models import Registration, TokenResponse
+from ....models import Registration, TokenResponse, Token
 from ....models.user import User
 from ....db.user import UserDb
 from ....internal import get_db
@@ -47,7 +45,6 @@ async def authorize(
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
-    Authorize: AuthJWT = Depends(),
 ) -> TokenResponse:
 
     email = clean(form_data.username)
@@ -65,26 +62,11 @@ async def login(
             status_code=401, detail="email or password is incorrect.")
 
     # Generates token
-    # token = Token.create_token(user.email, user.id)
-    access_token = Authorize.create_access_token(
-        subject=user.email,
-        user_claims={
-            "email": user.email,
-            "user_id": user.id
-        }
-    )
-    refresh_token = Authorize.create_refresh_token(
-        subject=user.email,
-        user_claims={
-            "email": user.email,
-            "user_id": user.id,
-            "scopes": scopes
-        }
-    )
+    access_token = Token.create_token(user.email, user.id)
 
     payload = TokenResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
+        refresh_token=None,
         token_type="bearer",
         scope=scopes,
     )
@@ -93,29 +75,13 @@ async def login(
 
 
 @oauth_router.post('/refresh')
-def refresh(refresh_token: str, Authorize: AuthJWT = Depends(), db: Session = Depends(get_db)):
+def refresh(refresh_token: str, db: Session = Depends(get_db)):
 
-    if refresh_token is None:
-        raise HTTPException(
-            status_code=400, detail="Missing refresh_token parameter")
-
-    email: str = Authorize.get_jwt_subject()
-
-    user: User = UserDb.get_user(db, email)
-
-    access_token = Authorize.create_access_token(subject=user.email, user_claims={
-                                                 "email": user.email, "user_id": user.id})
-    refresh_token = Authorize.create_refresh_token(
-        subject=user.email, user_claims={"email": user.email, "user_id": user.id})
-
-    payload = TokenResponse(access_token=access_token,
-                            refresh_token=refresh_token, token_type="bearer")
-
-    return payload
+    raise HTTPException(status_code=404, detail="refresh endpoint not implemented")
 
 
 @oauth_router.post("/register")
-async def register(registration_info: Registration, Authorize: AuthJWT = Depends(), db: Session = Depends(get_db)):
+async def register(registration_info: Registration, db: Session = Depends(get_db)):
 
     salt = bcrypt.gensalt()
     passhash = bcrypt.hashpw(registration_info.password.encode('utf-8'), salt)
@@ -130,12 +96,12 @@ async def register(registration_info: Registration, Authorize: AuthJWT = Depends
     except Exception as e:
         raise HTTPException(status_code=406, detail=str(e))
 
-    access_token = Authorize.create_access_token(subject=user.email, user_claims={
-                                                 "email": user.email, "user_id": user.id})
-    refresh_token = Authorize.create_refresh_token(
-        subject=user.email, user_claims={"email": user.email, "user_id": user.id})
+    # Generates token
+    access_token = Token.create_token(user.email, user.id)
 
-    payload = TokenResponse(access_token=access_token,
-                            refresh_token=refresh_token, token_type="bearer")
-
-    return payload
+    payload = TokenResponse(
+        access_token=access_token,
+        refresh_token=None,
+        token_type="bearer",
+        scope=[],
+    )

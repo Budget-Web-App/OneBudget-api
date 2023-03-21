@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from enum import Enum, StrEnum, auto
 
-from api.internal import get_private_key
+from api.internal.config import get_settings
 
 from jwt import encode, decode, exceptions
 
@@ -24,7 +24,7 @@ class TokenResponse(BaseModel):
     token_type: str
     expires_in: int = 0
     scope: List[str] = []
-    refresh_token: str
+    refresh_token: Optional[str]
     
 class Token(BaseModel):
     email: str
@@ -46,7 +46,7 @@ class Token(BaseModel):
         token = token.replace("Bearer ", "")
 
         try:
-            decoded_token = decode(token, key=get_private_key(), algorithms=['RS256'], options={"verify_signature": False})
+            decoded_token = decode(token, key=get_settings().authjwt_private_key, algorithms=[*get_settings().authjwt_algorithm], options={"verify_signature": False})
             return cls(
                 **decoded_token
             )
@@ -67,11 +67,11 @@ class Token(BaseModel):
         )
         
         # Generate token
-        return encode(payload.__dict__, get_private_key(), algorithm='RS256')
+        return encode(payload.dict(), get_settings().authjwt_private_key, algorithm=get_settings().authjwt_algorithm)
     
     def encode(self) -> str:
         # Generate token
-        return encode(self, get_private_key(), algorithm='RS256')
+        return encode(self.dict(), get_settings().authjwt_private_key, algorithm=get_settings().authjwt_algorithm)
         
         
 class GrantTypes(StrEnum):

@@ -17,7 +17,7 @@ RUN apt-get -y update \
 
 # Files for initializing the database.
 COPY initdb/0-accounts-schema.sql /docker-entrypoint-initdb.d/0-accounts-schema.sql
-COPY initdb/1-load-testdata.sh /docker-entrypoint-initdb.d/1-load-testdata.sh
+#COPY initdb/1-load-testdata.sh /docker-entrypoint-initdb.d/1-load-testdata.sh
 #RUN chmod 755  /docker-entrypoint-initdb.d/1-load-testdata.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
 
