@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from api.internal.config import DATABASE_PATH
+from api.config import DATABASE_PATH
 
 engine_args = {
     "url": DATABASE_PATH
