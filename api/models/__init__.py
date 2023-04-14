@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from enum import Enum, StrEnum, auto
 
-from api.internal.config import get_settings
+from api.config import get_settings
 
 from jwt import encode, decode, exceptions
 

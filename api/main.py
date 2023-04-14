@@ -1,20 +1,8 @@
-from typing import Optional
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
 
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-
-
-
-from bleach import clean
-import bcrypt
-
-from sqlalchemy.orm import Session
-
-from .models import Authentication, GrantTypes, Registration, TokenResponse, Token
-from .models.user import User
 from .routers.beta import beta_router
-from .db.user import UserDb
-from .internal import get_db, jwt_refresh_token_required
 
 app = FastAPI(
     debug=True,
@@ -31,6 +19,21 @@ app = FastAPI(
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
+)
+
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(beta_router)
