@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from pydantic import BaseSettings
 
 # To make runnable without docker
-if environ.get("DOCKERCONTAINER", False):
+if not environ.get("DOCKERCONTAINER", False):
     # To make compatible with any OS
     env_path = join(getcwd(), ".env")
 
@@ -20,7 +20,10 @@ class Settings(BaseSettings):
     authjwt_public_key: str
 
 
-DATABASE_PATH = environ.get('DB_URI')
+DATABASE_PATH = environ.get('DB_URI', None)
+
+if DATABASE_PATH is None:
+    raise Exception("Env not setup")
 
 
 @lru_cache
