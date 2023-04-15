@@ -2,10 +2,12 @@
 License Goes Here
 """
 
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+
+from fastapi_pagination import Page, paginate
 
 from sqlalchemy.orm import Session
 
@@ -25,19 +27,19 @@ budget_flags_router = APIRouter(
 )
 
 
-@budget_flags_router.get("/")
+@budget_flags_router.get(path="/", response_model=Page[Flag])
 async def list_budget_flags(
     budget_id: str,
     token: str = Depends(oauth2_scheme),
     db_session: Session = Depends(get_db)
-    ) -> List[Flag]:
+    ) -> Page[Flag]:
     """
     Gets a list of flags for the budget
     """
 
     _ = Token.parse_token(token)
 
-    return FlagDb.list_flags(db_session, budget_id)
+    return paginate(FlagDb.list_flags(db_session, budget_id))
 
 @budget_flags_router.post("/")
 async def create_budget_flag(

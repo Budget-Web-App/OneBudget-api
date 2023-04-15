@@ -7,6 +7,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 
+from fastapi_pagination import Page, paginate
+
 from sqlalchemy.orm import Session
 
 from api.db.category import CategoryDb
@@ -25,19 +27,19 @@ budgets_categories_router = APIRouter(
 )
 
 
-@budgets_categories_router.get("/")
+@budgets_categories_router.get(path="/", response_model=Page[Category])
 async def list_budget_categories(
     budget_id: str,
     token: str = Depends(oauth2_scheme),
     db_session: Session = Depends(get_db)
-) -> List[Category]:
+) -> Page[Category]:
     """
     Lists categories for the specific budget
     """
 
-    token_data = Token.parse_token(token)
+    _ = Token.parse_token(token)
 
-    return CategoryDb.list_categories(db_session, budget_id)
+    return paginate(CategoryDb.list_categories(db_session, budget_id))
 
 
 @budgets_categories_router.post("/")
