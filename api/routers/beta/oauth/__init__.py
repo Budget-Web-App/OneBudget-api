@@ -1,3 +1,6 @@
+"""
+License Goes Here
+"""
 from typing import Optional
 from base64 import b32encode
 
@@ -34,7 +37,7 @@ async def authorize(
     """
     Used to interactively authenticate user to API
     """
-    
+
     totp: pyotp.TOTP = pyotp.TOTP(
         b32encode(state).decode('utf-8'), interval=600)
     code = totp.now()
