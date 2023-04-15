@@ -1,3 +1,6 @@
+"""
+License Goes Here
+"""
 from os import environ, getcwd
 from os.path import join
 

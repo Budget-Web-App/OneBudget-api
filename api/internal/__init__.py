@@ -1,9 +1,21 @@
+"""
+License Goes Here
+"""
+
+from typing import Generator
+
+from sqlalchemy.orm import Session
+
 from api.db import SessionLocal
 
-# Dependency
 
+def get_db() -> Generator[Session, None, None]:
+    """Gets Database Session
 
-def get_db():
+    Yields:
+        Generator[Session, None, None]: Database session
+    """
+    
     db = SessionLocal()
     try:
         yield db

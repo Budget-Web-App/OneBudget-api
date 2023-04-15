@@ -1,7 +1,11 @@
+"""
+License Goes Here
+"""
+
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, LargeBinary, Date
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy import Column, String, LargeBinary, Date
+from sqlalchemy.orm import Session
 
 from random import randint
 
@@ -11,6 +15,11 @@ from api.models.user import User
 
 
 class UserDb(Base):
+    """
+    User DB
+    =======
+    Controls applications interaction with user database
+    """
 
     __tablename__ = "users"
 

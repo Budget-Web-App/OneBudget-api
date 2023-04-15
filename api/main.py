@@ -1,3 +1,6 @@
+"""
+License Goes Here
+"""
 from typing import Callable
 
 import time
