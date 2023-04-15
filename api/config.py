@@ -15,6 +15,12 @@ if not environ.get("DOCKERCONTAINER", False):
 
 
 class Settings(BaseSettings):
+    """
+    Settings
+    ========
+    API Settings
+    """
+    
     authjwt_algorithm: str
     authjwt_private_key: str
     authjwt_public_key: str
@@ -27,19 +33,19 @@ if DATABASE_PATH is None:
 
 
 @lru_cache
-def get_settings():
+def get_settings() -> Settings:
 
-    PRIV_KEY_PATH = environ.get("PRIV_KEY_PATH")
-    PUB_KEY_PATH = environ.get("PUB_KEY_PATH")
+    priv_key_path = environ.get("PRIV_KEY_PATH")
+    pub_key_path = environ.get("PUB_KEY_PATH")
 
-    if PRIV_KEY_PATH is None:
+    if priv_key_path is None:
         raise Exception("Missing PRIV_KEY_PATH")
 
-    if PUB_KEY_PATH is None:
+    if pub_key_path is None:
         raise Exception("Missing PUB_KEY_PATH")
 
     return Settings(
         authjwt_algorithm="RS512",
-        authjwt_private_key=open(PRIV_KEY_PATH, 'r').read(),
-        authjwt_public_key=open(PUB_KEY_PATH, 'r').read(),
+        authjwt_private_key=open(priv_key_path, 'r').read(),
+        authjwt_public_key=open(pub_key_path, 'r').read(),
     )

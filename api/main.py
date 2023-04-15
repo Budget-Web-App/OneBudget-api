@@ -11,8 +11,39 @@ from fastapi.security import OAuth2PasswordBearer
 
 from .routers.beta import beta_router
 
+class AccessLogRecord(logging.LogRecord):
+    """
+    Access Log Record
+    =================
+    Specialized logging record for the CustomAccessLogFormatter
+    """
+
+    remote_addr: str
+    request_method: str
+    path: str
+    http_version: str
+    status_code: str
+    response_size: str
+    referrer: str
+    user_agent: str
+
 class CustomAccessLogFormatter(logging.Formatter):
-    def format(self, record):
+    """
+    Custom Access Log Formatter
+    ===========================
+    Used to format access logs for HTTP requests
+    """
+
+    def format(self, record: AccessLogRecord) -> str:
+        """Formates the record to the needed log line
+
+        Args:
+            record (_type_): _description_
+
+        Returns:
+            str: The formatted log line
+        """
+
         timestamp = time.strftime('%d/%b/%Y:%H:%M:%S %z', time.localtime(record.created))
         log_line = f'{record.remote_addr} - [{timestamp}] "{record.request_method} {record.path} {record.http_version}" {record.status_code} {record.response_size} "{record.referrer}" "{record.user_agent}"'
         return log_line

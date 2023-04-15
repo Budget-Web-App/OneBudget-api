@@ -1,12 +1,11 @@
 from typing import Optional
+from base64 import b32encode
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 import pyotp
-
-from base64 import b32encode
 
 from bleach import clean
 import bcrypt
@@ -30,8 +29,12 @@ oauth_router = APIRouter(
 async def authorize(
     state: bytes,
     redirect_uri: str,
-    response_type: Optional[str] = None,
+    response_type: Optional[str] = None, #pylint: disable=unused-argument
 ):
+    """
+    Used to interactively authenticate user to API
+    """
+    
     totp: pyotp.TOTP = pyotp.TOTP(
         b32encode(state).decode('utf-8'), interval=600)
     code = totp.now()
@@ -44,22 +47,27 @@ async def authorize(
 @oauth_router.post("/token")
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
+    db_session: Session = Depends(get_db),
 ) -> TokenResponse:
+    """
+    Authenticates user to API returning JWT Auth token
+    """
 
     email = clean(form_data.username)
     password = clean(form_data.password)
 
     scopes = form_data.scopes
 
-    user: User = UserDb.get_user(db, email)
+    user: User = UserDb.get_user(db_session, email)
 
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
     if not bcrypt.checkpw(password.encode('utf-8'), user.pass_hash):
         raise HTTPException(
-            status_code=401, detail="email or password is incorrect.")
+            status_code=401,
+            detail="email or password is incorrect."
+        )
 
     # Generates token
     access_token = Token.create_token(user.email, user.id)
@@ -75,32 +83,42 @@ async def login(
 
 
 @oauth_router.post('/refresh')
-def refresh(refresh_token: str, db: Session = Depends(get_db)):
+def refresh(refresh_token: str, db_session: Session = Depends(get_db)):
+    """
+    Refreshes user's current session
+    """
 
-    raise HTTPException(status_code=404, detail="refresh endpoint not implemented")
+    raise HTTPException(
+        status_code=404, detail="refresh endpoint not implemented")
 
 
 @oauth_router.post("/register")
-async def register(registration_info: Registration, db: Session = Depends(get_db)):
+async def register(
+    registration_info: Registration,
+    db_session: Session = Depends(get_db)
+) -> TokenResponse:
+    """
+    Used to register a new user
+    """
 
     salt = bcrypt.gensalt()
     passhash = bcrypt.hashpw(registration_info.password.encode('utf-8'), salt)
 
     user = User(
-        id = "",
+        id="",
         email=registration_info.email,
         pass_hash=passhash
     )
 
     try:
-        new_user = UserDb.add_user(db, user)
-    except Exception as e:
-        raise HTTPException(status_code=406, detail=str(e))
+        _ = UserDb.add_user(db_session, user)
+    except Exception as err:
+        raise HTTPException(status_code=406, detail=str(err)) from err
 
     # Generates token
     access_token = Token.create_token(user.email, user.id)
 
-    payload = TokenResponse(
+    return TokenResponse(
         access_token=access_token,
         refresh_token=None,
         token_type="bearer",
