@@ -38,7 +38,7 @@ class Token(BaseModel):
     exp: int
 
     @classmethod
-    def parse_token(cls, token: str) -> Optional["Token"]:
+    def parse_token(cls, token: str) -> "Token":
         """_summary_
 
         Returns:

@@ -12,6 +12,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 
+from fastapi_pagination import add_pagination
+
 from api.routers.beta import beta_router
 
 class AccessLogRecord(logging.LogRecord):
@@ -98,6 +100,8 @@ app = FastAPI(
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
 )
+
+add_pagination(app)
 
 origins = [
     "http://localhost.tiangolo.com",
