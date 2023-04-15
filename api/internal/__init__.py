@@ -1,15 +1,21 @@
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
+"""
+License Goes Here
+"""
 
-from fastapi import Request
+from typing import Generator
 
-from .config import get_settings
-from ..db import SessionLocal
+from sqlalchemy.orm import Session
 
-# Dependency
+from api.db import SessionLocal
 
 
-def get_db():
+def get_db() -> Generator[Session, None, None]:
+    """Gets Database Session
+
+    Yields:
+        Generator[Session, None, None]: Database session
+    """
+    
     db = SessionLocal()
     try:
         yield db

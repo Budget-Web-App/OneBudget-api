@@ -1,7 +1,11 @@
+"""
+License Goes Here
+"""
+
 from typing import Optional, List
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, LargeBinary, Date
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy import Column, String
+from sqlalchemy.orm import Session
 
 from random import randint
 
@@ -10,6 +14,11 @@ from . import Base, engine
 from api.models.flag import IntermediaryFlag
 
 class FlagDb(Base):
+    """
+    Flag DB
+    =======
+    Controls applications interaction with flag database
+    """
     
     __tablename__ = "flags"
 
@@ -58,11 +67,21 @@ class FlagDb(Base):
     
     @staticmethod
     def list_flags(db: Session, budget_id: str) -> List['FlagDb']:
+        """Lists flags for budget_id
+
+        Returns:
+            List[FlagDb]: List of flags
+        """
     
         return db.query(FlagDb).filter(FlagDb.budget_id == budget_id).all()
     
     @staticmethod
     def get_flag(db: Session, flag_id: str) -> Optional['FlagDb']:
+        """Gets the flag based off id
+
+        Returns:
+            Optional[FlagDb]: The flag
+        """
         
         return db.query(FlagDb).filter(FlagDb.id == flag_id).first()
     

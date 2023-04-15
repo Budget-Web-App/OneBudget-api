@@ -1,7 +1,11 @@
+"""
+License Goes Here
+"""
+
 from typing import Optional, List
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, LargeBinary, Date
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy import Column, String
+from sqlalchemy.orm import Session
 
 from random import randint
 
