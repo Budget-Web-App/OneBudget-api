@@ -12,7 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 
-from .routers.beta import beta_router
+from api.routers.beta import beta_router
 
 class AccessLogRecord(logging.LogRecord):
     """
@@ -59,6 +59,12 @@ handler.setFormatter(CustomAccessLogFormatter())
 logger.addHandler(handler)
 
 class AccessLogMiddleware(BaseHTTPMiddleware):
+    """
+    Access Log Middleware
+    =====================
+    Middleware for logging HTTP request
+    """
+
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], None]
     ):
