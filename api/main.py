@@ -1,8 +1,46 @@
-from fastapi import FastAPI
+from typing import Callable
+
+import time
+import logging.config
+
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 
 from .routers.beta import beta_router
+
+class CustomAccessLogFormatter(logging.Formatter):
+    def format(self, record):
+        timestamp = time.strftime('%d/%b/%Y:%H:%M:%S %z', time.localtime(record.created))
+        log_line = f'{record.remote_addr} - [{timestamp}] "{record.request_method} {record.path} {record.http_version}" {record.status_code} {record.response_size} "{record.referrer}" "{record.user_agent}"'
+        return log_line
+
+logger = logging.getLogger('access_log')
+logger.setLevel(logging.INFO)
+
+handler = logging.StreamHandler()
+handler.setFormatter(CustomAccessLogFormatter())
+logger.addHandler(handler)
+
+class AccessLogMiddleware(BaseHTTPMiddleware):
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], None]
+    ):
+        response = await call_next(request)
+        log_data = {
+            'remote_addr': request.client.host,
+            'request_method': request.method,
+            'path': request.url.path,
+            'http_version': f'HTTP/{request.scope["http_version"]}',
+            'status_code': response.status_code,
+            'response_size': response.headers.get('content-length', '-'),
+            'referrer': request.headers.get('referer', '-'),
+            'user_agent': request.headers.get('user-agent', '-')
+        }
+        logger.info('', extra=log_data)
+        return response
 
 app = FastAPI(
     debug=True,
@@ -35,6 +73,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(AccessLogMiddleware)
 
 app.include_router(beta_router)
 

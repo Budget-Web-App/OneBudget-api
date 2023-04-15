@@ -87,6 +87,7 @@ async def register(registration_info: Registration, db: Session = Depends(get_db
     passhash = bcrypt.hashpw(registration_info.password.encode('utf-8'), salt)
 
     user = User(
+        id = "",
         email=registration_info.email,
         pass_hash=passhash
     )
