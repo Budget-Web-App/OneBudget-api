@@ -4,7 +4,7 @@ License Goes Here
 
 from typing import Optional, List
 
-from sqlalchemy import Column, String, Date
+from sqlalchemy import Column, String, Date, select
 from sqlalchemy.orm import Session
 
 from random import randint
@@ -23,7 +23,7 @@ class BudgetDb(Base):
     notes = Column('budgetnotes', String, nullable=True)
     accessed_date = Column('accessdate', Date, nullable=False)
     user_id = Column('userid', String, nullable=False)
-    
+
     @staticmethod
     def add_budget(db: Session, budget: Budget) -> 'BudgetDb':
         
@@ -38,7 +38,7 @@ class BudgetDb(Base):
         db.commit()
         db.refresh(db_budget)
         return db_budget
-    
+
     @staticmethod
     def generate_id(db: Session) -> str:
         """Generates a globally unique alphanumerical budget id.
@@ -62,11 +62,11 @@ class BudgetDb(Base):
                 budget_id = None
 
         return budget_id
-    
+
     @staticmethod
-    def list_budgets(db: Session, user_id: str) -> List['BudgetDb']:
-    
-        return db.query(BudgetDb).filter(BudgetDb.user_id == user_id).all()
+    def list_budgets(db: Session, user_id: str, properties: List[str]) -> List['BudgetDb']:
+        
+        return db.query(*[getattr(BudgetDb, prop) for prop in properties]).filter(BudgetDb.user_id == user_id).all()
     
     @staticmethod
     def get_budget(db: Session, budget_id: str) -> Optional['BudgetDb']:
