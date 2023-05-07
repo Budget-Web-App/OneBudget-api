@@ -2,7 +2,7 @@
 License Goes Here
 """
 
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -33,18 +33,24 @@ budgets_router.include_router(budgets_categories_router)
 budgets_router.include_router(budget_flags_router)
 
 
-@budgets_router.get(path="/", response_model=Page[Budget])
+@budgets_router.get(path="/", response_model=Page[Budget], response_model_exclude_none=True)
 async def list_budgets(
+    select: Optional[str] = None,
     token: str = Depends(oauth2_scheme),
-    db_session: Session = Depends(get_db)
-) -> Page[Budget]:
+    db_session: Session = Depends(get_db),
+):
     """
     Lists all budgets for the current user
     """
 
+    if select is None:
+        select = "id,display_name,notes,accessed_date,user_id"
+
+    cleaned_select = [sel.strip() for sel in select.split(",")]
+
     token_data = Token.parse_token(token)
 
-    budgets = BudgetDb.list_budgets(db_session, token_data.user_id)
+    budgets = BudgetDb.list_budgets(db_session, token_data.user_id, cleaned_select)
 
     return paginate(budgets)
 

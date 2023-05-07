@@ -28,10 +28,11 @@ class Budget(BaseBudget):
     ======
     
     """
-    
+
     id: Optional[str] = None
-    accessed_date: date
-    user_id: str
+    display_name: Optional[str] = None
+    accessed_date: Optional[date] = None
+    user_id: Optional[str] = None
 
     class Config:  # pylint: disable=missing-class-docstring
         orm_mode = True
