@@ -6,6 +6,8 @@ from typing import Callable
 import time
 import logging.config
 
+from os import environ
+
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from fastapi import FastAPI, Request
@@ -15,6 +17,10 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi_pagination import add_pagination
 
 from api.routers.beta import beta_router
+
+from api.app_logger import get_logger
+
+#logger = get_logger(__name__, logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
 class AccessLogRecord(logging.LogRecord):
     """
@@ -123,3 +129,5 @@ app.add_middleware(AccessLogMiddleware)
 app.include_router(beta_router)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+logger.debug(environ.get("APP_ROLE_ID"))
