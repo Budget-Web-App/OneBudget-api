@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 
 from pydantic import BaseSettings
 
+from api.vault import client
+
 # To make runnable without docker
 if not environ.get("DOCKERCONTAINER", False):
     # To make compatible with any OS
@@ -28,8 +30,7 @@ class Settings(BaseSettings):
     authjwt_private_key: str
     authjwt_public_key: str
 
-
-DATABASE_PATH = environ.get('DB_URI', None)
+DATABASE_PATH = environ.get("DB_URI") #client.read(path="projects-api/database/config/projects-database")
 
 if DATABASE_PATH is None:
     raise Exception("Env not setup") # pylint: disable=broad-exception-raised

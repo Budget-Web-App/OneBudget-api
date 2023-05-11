@@ -18,10 +18,6 @@ from fastapi_pagination import add_pagination
 
 from api.routers.beta import beta_router
 
-from api.app_logger import get_logger
-
-#logger = get_logger(__name__, logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-
 class AccessLogRecord(logging.LogRecord):
     """
     Access Log Record
@@ -129,5 +125,3 @@ app.add_middleware(AccessLogMiddleware)
 app.include_router(beta_router)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-logger.debug(environ.get("APP_ROLE_ID"))
